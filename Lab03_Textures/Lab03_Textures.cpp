@@ -57,12 +57,49 @@ int main( void )
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
     
     // Define vertices
-    const float vertices[] = {
-        // x     y     z
-        -0.5f, -0.5f, 0.0f,
-         0.5f, -0.5f, 0.0f,
-         0.0f,  0.5f, 0.0f
+    //const float vertices[] = {
+    //    // x     y     z
+    //    -0.5f, -0.5f, 0.0f,
+    //     0.5f, -0.5f, 0.0f,
+    //     0.5f,  0.5f, 0.0f,
+    //    -0.5f, -0.5f, 0.0f,
+    //     0.5f,  0.5f, 0.0f,
+    //    -0.5f,  0.5f, 0.0f
+    //};
+
+    //Define vertex positions
+    static const float vertices[] = {
+        //x     y       z       index
+       -0.5f, -0.5f, 0.0f,      //0
+        0.5f, -0.5f, 0.0f,      //1
+        0.5f, 0.5f, 0.0f,       //2
+       -0.5f, 0.5f, 0.0f        //3
     };
+
+    //Define Texture coordinates
+    static const float uv[] = {
+        // u    v      index
+        0.0f,  0.0f,  // 0
+        1.0f,  0.0f,  // 1
+        1.0f,  1.0f,  // 2
+        0.0f,  1.0f,  // 3
+    };
+
+    //Define indices
+    static const unsigned int indices[] = {
+        0, 1, 2, //lower right
+        0, 2, 3  //upper left
+    };
+
+    //const float uv[] = {
+    //    //u     v
+    //    0.0f, 0.0f,     //triangle 1
+    //    1.0f, 0.0f,
+    //    1.0f, 1.0f,
+    //    0.0f, 0.0f,    // triangle 2
+    //    1.0f, 1.0f,
+    //    0.0f, 1.0f
+    //};
   
     // Create the Vertex Array Object (VAO)
     unsigned int VAO;
@@ -74,13 +111,89 @@ int main( void )
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+   
+
+    //Create Texture buffer
+    unsigned int uvBuffer;
+    glGenBuffers(1, &uvBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(uv), uv, GL_STATIC_DRAW);
+
+    //Create Element Buffer Object
+    unsigned int EBO;
+    glGenBuffers(1, &EBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+    
+    //Send UV to the shader
+    glEnableVertexAttribArray(1);
+    glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
     
     // Compile shader program
     unsigned int shaderID;
     shaderID = LoadShaders("vertexShader.glsl", "fragmentShader.glsl");
+
+    //Create and Bind texture
+    unsigned int texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+   // Bind texture to VAO
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glBindVertexArray(VAO);
+
+    //Load texture
+    //const char *path = "../assets/mario.png";
+    // Load the textures
+    unsigned int texture1 = loadTexture("../assets/kratos.png");
+    unsigned int texture2 = loadTexture("../assets/mario.png");
+
+    int width, height, nChannels;
+    stbi_set_flip_vertically_on_load(true);
+    //unsigned char *data = stbi_load(path, &width, &height, &nChannels, 0);
+
+   ///* if (data)
+   //     std::cout << "Texture loaded. " << std::endl;
+   // else
+   //     std::cout << "Texture not loaded. Check the path. " << std::endl;*/
+
+    //Specify 2D texture
+    /*glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);*/
+
+    //Set texture wrapping
+   /* glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);*/
+
+    //Nearest Neighbour Interpolation
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    //BiLinear Interpolation
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+
     
+    // Free the image from the memory
+    //stbi_image_free(data);
+
     // Use the shader program
     glUseProgram(shaderID);
+
+    //Send the texture uniforms to the fragment shader
+    glUseProgram(shaderID);
+    glUniform1i(glGetUniformLocation(shaderID, "texture1"), 0);
+    glUniform1i(glGetUniformLocation(shaderID, "texture2"), 1);
+
+    // Bind the textures
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture1);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, texture2);
     
     // Render loop
 	while (!glfwWindowShouldClose(window))
@@ -97,9 +210,13 @@ int main( void )
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
         
-        // Draw the triangle
-        glDrawArrays(GL_TRIANGLES, 0, sizeof(vertices) / sizeof(float));
+       //  Draw the triangle
+        /*glDrawArrays(GL_TRIANGLES, 0, sizeof(vertices) / sizeof(float));
+        glDisableVertexAttribArray(0);*/
+
+        glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(unsigned int), GL_UNSIGNED_INT, 0);
         glDisableVertexAttribArray(0);
+        //glDisableVertexAttribArray(1);
         
 		// Swap buffers
 		glfwSwapBuffers(window);
