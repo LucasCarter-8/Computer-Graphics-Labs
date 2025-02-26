@@ -25,7 +25,7 @@ int main( void )
     }
 
     glfwWindowHint(GLFW_SAMPLES, 4);
-    glfwWindowHint(GLFW_RESIZABLE,GL_FALSE);
+    glfwWindowHint(GLFW_RESIZABLE,GL_TRUE);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
@@ -120,6 +120,8 @@ int main( void )
     textureID = glGetUniformLocation(shaderID, "texture");
     glUniform1i(textureID, 0);
     
+  
+
     // Render loop
     while (!glfwWindowShouldClose(window))
     {
@@ -140,6 +142,20 @@ int main( void )
         glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
         
+        //Transformations
+        glm::mat4 translate = Maths::translate(glm::vec3(0.5f, 0.5f, 0.0f));
+        glm::mat4 scale = Maths::scale(glm::vec3(0.4f, 0.3f, 1.0f));
+        float angle = Maths::radians(glfwGetTime() * 360.0 / 2.0f);
+        float negAngle = Maths::radians(glfwGetTime() * 360.0 / 1.0f);
+        glm::mat4 rotate = Maths::rotate(angle, glm::vec3(0.0f, 0.0f, 1.0f));
+        glm::mat4 negativeRotate = Maths::rotate(negAngle, glm::vec3(0.0f, 0.0f, -1.0f));
+
+        // Send the transformation matrix to the shader
+        glm::mat4 transformation = rotate * translate * negativeRotate * scale;
+        unsigned int transformationID;
+        transformationID = glGetUniformLocation(shaderID, "transformation");
+        glUniformMatrix4fv(transformationID, 1, GL_FALSE, &transformation[0][0]);
+
         // Draw the triangles
         glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(unsigned int),
                        GL_UNSIGNED_INT, 0);
