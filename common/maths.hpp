@@ -17,5 +17,7 @@ public:
 
     static float Maths::radians(float angle);
 
+    static float Maths::clamp(float a,float min, float max);
+
     static glm::mat4 rotate(const float &angle, glm::vec3& v);
 };

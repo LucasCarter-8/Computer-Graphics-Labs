@@ -43,3 +43,14 @@ glm::mat4 Maths::rotate(const float &angle, glm::vec3 &v)
 
     return rotate;
 }
+
+float Maths::clamp(float number, float min, float max)
+{
+    if (number < min) {
+        number = min;
+    }
+    if (number > max) {
+        number = max;
+    }
+    return number;
+}
