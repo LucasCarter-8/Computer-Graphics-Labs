@@ -104,6 +104,8 @@ int main( void )
     
     // Load the textures
     teapot.addTexture("../assets/blue.bmp", "diffuse");
+    teapot.addTexture("../assets/diamond_normal.png", "normal");
+    teapot.addTexture("../assets/neutral_specular.png", "specular");
     
     // Define teapot object lighting properties
     teapot.ka = 0.2f;
@@ -127,18 +129,18 @@ int main( void )
                               1.0f, 0.1f, 0.02f,                    // attenuation
                               std::cos(Maths::radians(45.0f)));     // cos(phi)
     
-    lightSources.addDirectionalLight(glm::vec3(1.0f, -1.0f, 0.0f),  // direction
-                                     glm::vec3(1.0f, 1.0f, 0.0f));  // colour
+    //lightSources.addDirectionalLight(glm::vec3(1.0f, -1.0f, 0.0f),  // direction
+                                     //glm::vec3(1.0f, 1.0f, 1.0f));  // colour
     
     // Teapot positions
     glm::vec3 teapotPositions[] = {
         glm::vec3( 0.0f,  0.0f,  0.0f),
         glm::vec3( 2.0f,  5.0f, -10.0f),
-        glm::vec3(-3.0f, -2.0f, -3.0f),
-        glm::vec3(-4.0f, -2.0f, -8.0f),
+        glm::vec3(-3.0f, 0.0f, -3.0f),
+        glm::vec3(-4.0f, 0.0f, -8.0f),
         glm::vec3( 2.0f,  2.0f, -6.0f),
         glm::vec3(-4.0f,  3.0f, -8.0f),
-        glm::vec3( 0.0f, -2.0f, -5.0f),
+        glm::vec3( 0.0f, 0.0f, -5.0f),
         glm::vec3( 4.0f,  2.0f, -4.0f),
         glm::vec3( 2.0f,  0.0f, -2.0f),
         glm::vec3(-1.0f,  1.0f, -2.0f)
@@ -152,8 +154,65 @@ int main( void )
     {
         object.position = teapotPositions[i];
         object.rotation = glm::vec3(1.0f, 1.0f, 1.0f);
-        object.scale    = glm::vec3(0.75f, 0.75f, 0.75f);
+        object.scale    = glm::vec3(0.25f, 0.25f, 0.25f);
         object.angle    = Maths::radians(20.0f * i);
+        objects.push_back(object);
+    }
+
+    // Load a 2D plane model for the floor and add textures
+    Model floor("../assets/plane.obj");
+    floor.addTexture("../assets/stones_diffuse.png", "diffuse");
+    floor.addTexture("../assets/stones_normal.png", "normal");
+    floor.addTexture("../assets/stones_specular.png", "specular");
+
+    // Define floor light properties
+    floor.ka = 0.2f;
+    floor.kd = 1.0f;
+    floor.ks = 1.0f;
+    floor.Ns = 20.0f;
+
+    // Add floor model to objects vector
+    object.position = glm::vec3(0.0f, -0.85f, 0.0f);
+    object.scale = glm::vec3(1.0f, 1.0f, 1.0f);
+    object.rotation = glm::vec3(0.0f, 1.0f, 0.0f);
+    object.angle = 0.0f;
+    object.name = "floor";
+    objects.push_back(object);
+
+    glm::vec3 wallPositions[] = {
+     glm::vec3(0.0f,  4.0f,  -8.0f), 
+     glm::vec3(0.0f, 4.0f, 8.0f),
+     glm::vec3(-8.0f, 4.0f, 0.0f),
+     glm::vec3(8.0f, 4.0f, 0.0f)
+    };
+
+    glm::vec3 wallRotations[] = {
+     glm::vec3(1.0f,  0.0f,  0.0f),
+     glm::vec3(-1.0f, 0.0f, 0.0f),
+     glm::vec3(0.0f,  0.0f,  -1.0f),
+     glm::vec3(0.0f, 0.0f, 1.0f)
+    };
+    //Load Wall
+    Model wall("../assets/plane.obj");
+    wall.addTexture("../assets/bricks_diffuse.png", "diffuse");
+    wall.addTexture("../assets/bricks_normal.png", "normal");
+    wall.addTexture("../assets/bricks_specular.png", "specular");
+
+    //Wall properties
+    wall.ka = 0.2f;
+    wall.kd = 1.0f;
+    wall.ks = 1.0f;
+    wall.Ns = 20.0f;
+
+    //Add wall model to objects vector
+
+    object.name = "wall";
+    for (unsigned int i = 0; i <= wallPositions->length(); i++)
+    {
+        object.position = wallPositions[i];
+        object.rotation = wallRotations[i];
+        object.scale = glm::vec3(3.0f, 3.0f, 3.0f);
+        object.angle = Maths::radians(90.0f);
         objects.push_back(object);
     }
     
@@ -175,6 +234,16 @@ int main( void )
         
         // Calculate view and projection matrices
         camera.target = camera.eye + camera.front;
+        if (camera.jumping)
+        {
+            camera.eye.y = camera.jumpForce * sin(3.1416f * camera.jumpTime);
+            camera.jumpTime -= deltaTime;
+
+            if (camera.jumpTime <= 0)
+            {
+                camera.jumping = false;
+            }
+        }
         camera.calculateMatrices();
         
         // Activate shader
@@ -189,7 +258,16 @@ int main( void )
             // Calculate model matrix
             glm::mat4 translate = Maths::translate(objects[i].position);
             glm::mat4 scale     = Maths::scale(objects[i].scale);
-            glm::mat4 rotate    = Maths::rotate(objects[i].angle, objects[i].rotation);
+            glm::mat4 rotate;
+            if (objects[i].name == "teapot")
+            {
+                rotate = Maths::rotate(objects[i].angle * glfwGetTime(), objects[i].rotation);
+            }
+            else
+            {
+                rotate = Maths::rotate(objects[i].angle, objects[i].rotation);
+            }
+           
             glm::mat4 model     = translate * rotate * scale;
             
             // Send the MVP and MV matrices to the vertex shader
@@ -201,6 +279,12 @@ int main( void )
             // Draw the model
             if (objects[i].name == "teapot")
                 teapot.draw(shaderID);
+
+            if (objects[i].name == "floor")
+                floor.draw(shaderID);
+
+            if (objects[i].name == "wall")
+                wall.draw(shaderID);
         }
         
         // Draw light sources
@@ -237,6 +321,12 @@ void keyboardInput(GLFWwindow *window)
 
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.eye += 5.0f * deltaTime * camera.right;
+
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && camera.jumping == false)
+    {
+        camera.jumpTime = 1.0f;
+        camera.jumping = true;
+    }
 }
 
 void mouseInput(GLFWwindow *window)
@@ -249,8 +339,10 @@ void mouseInput(GLFWwindow *window)
     // Update yaw and pitch angles
     camera.yaw   += 0.005f * float(xPos - 1024 / 2);
     camera.pitch += 0.005f * float(768 / 2 - yPos);
-    
+
+    camera.pitch = Maths::clamp(camera.pitch, Maths::radians(-89), Maths::radians(89));
     // Calculate camera vectors from the yaw and pitch angles
     camera.calculateCameraVectors();
+
 }
 

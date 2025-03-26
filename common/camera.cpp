@@ -19,8 +19,7 @@ void Camera::calculateMatrices()
 }
 
 void Camera::calculateCameraVectors()
-{
-	
+{	
 	if(!jumping)
 	eye.y = 0;
 
