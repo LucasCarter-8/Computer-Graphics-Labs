@@ -21,6 +21,8 @@ float deltaTime    = 0.0f;  // time elapsed since the previous frame
 
 // Create camera object
 Camera camera(glm::vec3(0.0f, 0.0f, 5.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+//3D Camera bool
+bool thirdCamera = false;
 
 // Object struct
 struct Object
@@ -215,6 +217,14 @@ int main( void )
         object.angle = Maths::radians(90.0f);
         objects.push_back(object);
     }
+   
+    object.name = "player";
+    object.position = camera.eye;
+    object.rotation = glm::vec3(1.0f, 1.0f, 1.0f);
+    object.scale = glm::vec3(0.5f, 0.5f, 0.5f);
+    object.angle = 0.1f;
+    objects.push_back(object);
+        
     
     // Render loop
     while (!glfwWindowShouldClose(window))
@@ -244,7 +254,7 @@ int main( void )
                 camera.jumping = false;
             }
         }
-        camera.calculateMatrices();
+        camera.quaternionCamera(thirdCamera);
         
         // Activate shader
         glUseProgram(shaderID);
@@ -285,6 +295,13 @@ int main( void )
 
             if (objects[i].name == "wall")
                 wall.draw(shaderID);
+
+            if (objects[i].name == "player"&& thirdCamera)
+            {
+                objects[i].position = camera.eye - glm::vec3(0.0f, 0.5f, 0.0f);
+                teapot.draw(shaderID);
+            }
+               
         }
         
         // Draw light sources
@@ -327,6 +344,13 @@ void keyboardInput(GLFWwindow *window)
         camera.jumpTime = 1.0f;
         camera.jumping = true;
     }
+
+    if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)  
+        thirdCamera = false;
+    
+    if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
+        thirdCamera = true;
+    
 }
 
 void mouseInput(GLFWwindow *window)
@@ -340,7 +364,7 @@ void mouseInput(GLFWwindow *window)
     camera.yaw   += 0.005f * float(xPos - 1024 / 2);
     camera.pitch += 0.005f * float(768 / 2 - yPos);
 
-    camera.pitch = Maths::clamp(camera.pitch, Maths::radians(-89), Maths::radians(89));
+    //camera.pitch = Maths::clamp(camera.pitch, Maths::radians(-89), Maths::radians(89));
     // Calculate camera vectors from the yaw and pitch angles
     camera.calculateCameraVectors();
 

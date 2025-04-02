@@ -161,7 +161,8 @@ int main( void )
         
         // Calculate view and projection matrices
         camera.target = camera.eye + camera.front;
-        camera.calculateMatrices();
+        //camera.calculateMatrices();
+        camera.quaternionCamera();
         
         // Activate shader
         glUseProgram(shaderID);
@@ -241,5 +242,6 @@ void mouseInput(GLFWwindow *window)
     
     // Calculate camera vectors from the yaw and pitch angles
     camera.calculateCameraVectors();
+    
 }
 

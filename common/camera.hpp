@@ -27,7 +27,7 @@ public:
 	glm::mat4 projection;
 
 	// Camera Euler angles
-	float yaw = Maths::radians(-90.0f);
+	float yaw = 0.0f;
 	float pitch = 0.0f;
 	float roll = 0.0f;
 
@@ -36,11 +36,17 @@ public:
 	float jumpTime = 1.0f;
 	float jumpForce = 3.0f;
 
+	// Quaternion camera
+	Quaternion orientation = Quaternion(pitch, yaw);
+
+	//3D camera offset
+	glm::vec3 cameraOffset = glm::vec3(0.0f, -0.5f, -4.0f);
+
 	//Constructor
 	Camera(const glm::vec3 eye, const glm::vec3 target);
 
 	//Methods
 	void calculateMatrices();
 	void calculateCameraVectors();
-
+	void quaternionCamera(bool thirdCamera);
 };
